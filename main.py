@@ -28,11 +28,13 @@ async def on_message(message):
 
     if message.content == ".reply":
         conversation = "\n".join(chatHistory[channel_id])
+        print("chat history:", chatHistory)
+        print("conversation:", conversation)
         prompt = f"{conversation}\nHow would [Your Name] reply: "
         max_tokens = 50
 
         response = openai.Completion.create(
-          model="gpt-3.5-turbo-16k",
+          model="text-davinci-003",
           prompt=prompt,
           max_tokens=max_tokens
         )
@@ -40,4 +42,4 @@ async def on_message(message):
         reply = response.choices[0].text.strip()
         await message.channel.send(f"[Mimicking {message.author.name}]: {reply}")
 
-client.run("MTE1MjczMzMxMzE1MzM4MDQ4Mg.G9V-nZ.7hls6a2VQNVdMefgplyhqhhjrZvdDKIjf26BNw")
+client.run("")
