@@ -1,5 +1,5 @@
 import discord
-from discord import Intents  # Import the Intents class
+from discord import Intents, Message  # Import the Intents class
 import openai
 
 client = discord.Client(intents=Intents.all())  # Specify the intents
@@ -12,25 +12,22 @@ async def on_ready():
     print("Bot is ready.")
 
 @client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
+async def on_message(message: Message):
 
     channel_id = message.channel.id
 
     if channel_id not in chatHistory:
         chatHistory[channel_id] = []
 
-    chatHistory[channel_id].append(message.content)
+    chatHistory[channel_id].append(f"{message.author.global_name}: {message.content}")
 
     if len(chatHistory[channel_id]) > 100:
         chatHistory[channel_id].pop(0)
 
     if message.content == ".reply":
+
         conversation = "\n".join(chatHistory[channel_id])
-        # print("chat history:", chatHistory)
-        # print("conversation:", conversation)
-        prompt = f"{conversation}\nHow would [Your Name] reply: "
+        prompt = f"{conversation}\nHow would {message.author} reply? Please respond with the exact response."
         max_tokens = 50
 
         response = openai.ChatCompletion.create(  # Use the chat model endpoint
@@ -41,7 +38,6 @@ async def on_message(message):
             ],
             max_tokens = max_tokens,
         )
-        # print(response)
         reply = response.choices[0].message["content"].strip()
         await client.user.edit(username=message.author.name)
         await message.channel.send(f"[Mimicking {message.author.name}]: {reply}")
