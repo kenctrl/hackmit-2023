@@ -14,12 +14,14 @@ async def on_ready():
 @client.event
 async def on_message(message: Message):
 
-    channel_id = message.channel.id
+    channel = message.channel
+
+    channel_id = channel.id
 
     if channel_id not in chatHistory:
         chatHistory[channel_id] = []
 
-    chatHistory[channel_id].append(f"{message.author.global_name}: {message.content}")
+    chatHistory[channel_id].append(f"{message.author.name}: {message.content}")
 
     if len(chatHistory[channel_id]) > 100:
         chatHistory[channel_id].pop(0)
