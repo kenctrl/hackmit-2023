@@ -1,47 +1,63 @@
-import discord
-from discord import Intents, Message  # Import the Intents class
+from discord import Intents  # Import the Intents class
 import openai
+from discord.ext import commands
+import utils
 
-client = discord.Client(intents=Intents.all())  # Specify the intents
-openai.api_key = "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"
+MESSAGE_HISTORIES = {}
+MAX_TOKENS = 500
 
-chatHistory = {}
+bot = commands.Bot(intents=Intents.all(), command_prefix='!')
+openai.api_key = ""
 
-@client.event
+@bot.event
 async def on_ready():
     print("Bot is ready.")
 
-@client.event
-async def on_message(message: Message):
+@bot.event
+async def on_message(message):
+    try:
+        if message.content.split()[0] != "!reply":
+            if message.channel.id not in MESSAGE_HISTORIES:
+                MESSAGE_HISTORIES[message.channel.id] = []
+            MESSAGE_HISTORIES[message.channel.id].append(message.content)
+    except:
+        print("Message error. Message:", reply)
+    await bot.process_commands(message)
 
-    channel = message.channel
+@bot.command()
+async def reply(ctx: commands.Context):
+    channel_id = ctx.channel.id
+    if channel_id not in MESSAGE_HISTORIES:
+        MESSAGE_HISTORIES[channel_id] = []
+        messages = [msg async for msg in ctx.channel.history(limit=10)]
+        for msg in messages:
+            # if msg.author == ctx.author and msg.content != "!reply":
+            MESSAGE_HISTORIES[channel_id].append(f"{msg.author}: {msg.content}")
+    user_messages = "\n".join(MESSAGE_HISTORIES[channel_id])
 
-    channel_id = channel.id
+    instructions = utils.read_prompt_file('instructions.txt')
+    who_is = f"The person replying to the following conversation is {ctx.author.global_name}."
 
-    if channel_id not in chatHistory:
-        chatHistory[channel_id] = []
+    user_content = f"{instructions} \n {who_is} \n {user_messages}" 
 
-    chatHistory[channel_id].append(f"{message.author.name}: {message.content}")
+    # TODO: Are the messages being addded to the history backwards
+    response = openai.ChatCompletion.create(  # Use the chat model endpoint
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": utils.read_prompt_file('system.txt')},
+            {"role": "user", "content": user_content},
+        ],
+        max_tokens = MAX_TOKENS,
+    )
 
-    if len(chatHistory[channel_id]) > 100:
-        chatHistory[channel_id].pop(0)
+    reply = response.choices[0].message["content"].strip()
+    print("reply:", reply)
+    MESSAGE_HISTORIES[channel_id].append(reply)
+    await ctx.message.delete() # make sure to give bot manage messages permission
+    try:
+        await bot.user.edit(username=ctx.author.global_name, avatar=(await ctx.author.avatar.read()))
+    except:
+        print("Avatar error. Message:", reply)
+    await ctx.send(f"{reply}")
 
-    if message.content == ".reply":
-
-        conversation = "\n".join(chatHistory[channel_id])
-        prompt = f"{conversation}\nHow would {message.author} reply? Please respond with the exact response."
-        max_tokens = 50
-
-        response = openai.ChatCompletion.create(  # Use the chat model endpoint
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens = max_tokens,
-        )
-        reply = response.choices[0].message["content"].strip()
-        await client.user.edit(username=message.author.name)
-        await message.channel.send(f"[Mimicking {message.author.name}]: {reply}")
-
-client.run("MTE1MjczMzMxMzE1MzM4MDQ4Mg.GmtPEq.pue9VY1UYqLa9DRW8RZvQVYx2T0-qfYP6rL4Fs")
+bot.run("")

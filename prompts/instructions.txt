@@ -1,0 +1,2 @@
+The following messages contain up to the most recent 100 messages. Using this as context for the conversation,
+generate a response to the conversation. Generally, be concise and follow the talking patterns of the person that is replying.
