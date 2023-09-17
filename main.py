@@ -15,10 +15,13 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if message.content.split()[0] != "!reply":
-        if message.channel.id not in MESSAGE_HISTORIES:
-            MESSAGE_HISTORIES[message.channel.id] = []
-        MESSAGE_HISTORIES[message.channel.id].append(message.content)
+    try:
+        if message.content.split()[0] != "!reply":
+            if message.channel.id not in MESSAGE_HISTORIES:
+                MESSAGE_HISTORIES[message.channel.id] = []
+            MESSAGE_HISTORIES[message.channel.id].append(message.content)
+    except:
+        print("Message error. Message:", reply)
     await bot.process_commands(message)
 
 @bot.command()
@@ -39,7 +42,7 @@ async def reply(ctx: commands.Context):
 
     # TODO: Are the messages being addded to the history backwards
     response = openai.ChatCompletion.create(  # Use the chat model endpoint
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=[
             {"role": "system", "content": utils.read_prompt_file('system.txt')},
             {"role": "user", "content": user_content},
@@ -51,7 +54,10 @@ async def reply(ctx: commands.Context):
     print("reply:", reply)
     MESSAGE_HISTORIES[channel_id].append(reply)
     await ctx.message.delete() # make sure to give bot manage messages permission
-    await bot.user.edit(username=ctx.author.global_name, avatar=(await ctx.author.avatar.read()))
-    await ctx.send(f"[Mimicking {ctx.author.global_name}]: {reply}")
+    try:
+        await bot.user.edit(username=ctx.author.global_name, avatar=(await ctx.author.avatar.read()))
+    except:
+        print("Avatar error. Message:", reply)
+    await ctx.send(f"{reply}")
 
 bot.run("")
