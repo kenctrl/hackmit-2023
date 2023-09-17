@@ -14,6 +14,7 @@ html {
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; */
   font-family: 'Fira Mono', monospace;
   scroll-behavior: smooth;
+  background-color: #292a2e;
 }
 
 a {
@@ -33,6 +34,10 @@ a {
   margin: 0 auto;
   padding: 0 2.2rem;
   height: fit-content;
+}
+
+.title-margin-bottom {
+  margin-bottom: 5.5rem;
 }
 
 .b_half {
@@ -138,6 +143,19 @@ header {
   font-weight: 400;
 }
 
+.title-heading-bottom {
+  font-size: 3.6rem;
+  line-height: 1.08;
+  letter-spacing: 0.005rem;
+}
+
+.title-sub-heading-bottom {
+  font-size: 2rem;
+  margin-top: 0.6rem;
+  letter-spacing: 0.008rem;
+  font-weight: 400;
+}
+
 .margin-bottom {
   margin-bottom: 3.5rem;
 }
@@ -148,6 +166,10 @@ header {
   margin-top: 0.68rem;
 }
 
+.title-price span {
+  color:  rgb(233, 126, 151);
+}
+
 .cta {
   text-align: center;
   margin-top: 1.8rem;
@@ -156,10 +178,11 @@ header {
 .demo {
   text-align: center;
   background-color: #292a2e;
-  background-image: url("images/hero/chats/demo.gif");
+  /* background-image: url("images/hero/chats/demo-video.mov"); */
   height: 30rem;
   background-position: center;
   background-repeat: no-repeat;
+  margin-bottom: 5.5rem;
 }
 
 .cta-bottom {
@@ -199,7 +222,7 @@ header {
 }
 
 .title-red {
-  color:  rgb(177, 52, 81);
+  color:  rgb(233, 126, 151);
 }
 
 .cta-link-darker {
