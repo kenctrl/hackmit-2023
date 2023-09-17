@@ -1,49 +1,49 @@
-import discord
 from discord import Intents  # Import the Intents class
 import openai
+from discord.ext import commands
+import utils
 
-client = discord.Client(intents=Intents.all())  # Specify the intents
-openai.api_key = "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"
+MAX_TOKENS = 500
 
-chatHistory = {}
+bot = commands.Bot(intents=Intents.all(), command_prefix='!')
+openai.api_key = ""
 
-@client.event
+@bot.event
 async def on_ready():
     print("Bot is ready.")
 
-@client.event
+@bot.event
 async def on_message(message):
-    if message.author == client.user:
-        return
+    print(message.content)
+    await bot.process_commands(message)
 
-    channel_id = message.channel.id
+@bot.command()
+async def reply(ctx):
+    user_messages_list = []
+    messages = [msg async for msg in ctx.channel.history(limit=10)]
+    for msg in messages:
+        # if msg.author == ctx.author and msg.content != "!reply":
+        user_messages_list.append(f"{msg.author}: {msg.content}")
+    user_messages = "\n".join(user_messages_list)
+    print("user messages:", user_messages)
 
-    if channel_id not in chatHistory:
-        chatHistory[channel_id] = []
+    instructions = utils.read_prompt_file('instructions.txt')
+    who_is = f"The person replying to the following conversation is {ctx.author.name}."
 
-    chatHistory[channel_id].append(message.content)
+    user_content = f"{instructions} \n {who_is} \n {user_messages}" 
 
-    if len(chatHistory[channel_id]) > 100:
-        chatHistory[channel_id].pop(0)
+    response = openai.ChatCompletion.create(  # Use the chat model endpoint
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": utils.read_prompt_file('system.txt')},
+            {"role": "user", "content": user_content},
+        ],
+        max_tokens = MAX_TOKENS,
+    )
 
-    if message.content == ".reply":
-        conversation = "\n".join(chatHistory[channel_id])
-        # print("chat history:", chatHistory)
-        # print("conversation:", conversation)
-        prompt = f"{conversation}\nHow would [Your Name] reply: "
-        max_tokens = 50
+    reply = response.choices[0].message["content"].strip()
+    print("reply:", reply)
+    await bot.user.edit(username=ctx.author.name)
+    await ctx.send(f"[Mimicking {ctx.author.name}]: {reply}")
 
-        response = openai.ChatCompletion.create(  # Use the chat model endpoint
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens = max_tokens,
-        )
-        # print(response)
-        reply = response.choices[0].message["content"].strip()
-        await client.user.edit(username=message.author.name)
-        await message.channel.send(f"[Mimicking {message.author.name}]: {reply}")
-
-client.run("MTE1MjczMzMxMzE1MzM4MDQ4Mg.GmtPEq.pue9VY1UYqLa9DRW8RZvQVYx2T0-qfYP6rL4Fs")
+bot.run("")
