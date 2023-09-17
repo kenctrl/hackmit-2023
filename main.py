@@ -51,7 +51,6 @@ async def reply(ctx: commands.Context):
     )
 
     reply = response.choices[0].message["content"].strip()
-    print("reply:", reply)
     MESSAGE_HISTORIES[channel_id].append(reply)
     await ctx.message.delete() # make sure to give bot manage messages permission
     try:
